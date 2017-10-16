@@ -67,15 +67,14 @@ for link in owa_archive_soup.find_all('a'):
 ####################################
 archive_price_links_counter = 0
 
-#Manuelle Übersteuerung des max links
-archive_price_links_counter = 5
-
 number_of_lot_links = len(archive_price_links)
 
 
+# ----------- ACHTUNG: OPTIONAL -- Manuelle Übersteuerung des max links
+# ----------- Eingabe von <1 bedeutet nur letzte Auction
+while archive_price_links_counter < 1: 
 
-
-while archive_price_links_counter < number_of_lot_links: 
+#while archive_price_links_counter < number_of_lot_links: 
 
     
     r = requests.get(archive_price_links[archive_price_links_counter]) # iterate array !!
@@ -141,55 +140,66 @@ while archive_price_links_counter < number_of_lot_links:
             ####Lot
             mo =  re.search(r"Lot #[0-9]+",text_string)        
             data_list.append(text_cleaner(mo.group()))
-            print("Current Lot %s" % mo.group())
+            #print("Current Lot %s" % mo.group())
             ####Image
             mo =  re.search(r"http://www.*jpg",image_string)
+            # Attention: Removing "thumbs/" will lead to highres pic
             data_list.append(mo.group())
+            #print("Current Image %s" % mo.group())
             ####Title
             mo =  re.search(r"Lot #.*\n",text_string)        
             data_list.append(text_cleaner(mo.group()))
+            #print("Current Title %s" % mo.group())
             ####Estimate
             mo =  re.search(r"Estimate:.*\n.*[0]\n",text_string)        
             data_list.append(text_cleaner(mo.group()))
+            #print("Current Estimate %s" % mo.group())
             ####Sold for
             mo =  re.search(r"Sold for:.*[0]\n",text_string)
             if mo is not None:                    
                 data_list.append(text_cleaner(mo.group()))
+                #print("Current Sold for %s" % mo.group())
             else:
                 #print("Item not sold")
                 s= "-10000"
-                data_list.append(text_cleaner(s))
+                data_list.append(text_cleaner(s))   
             ####By
             mo =  re.search(r"By:.*\n",text_string)        
             data_list.append(text_cleaner(mo.group()))
+            #print("Current By %s" % mo.group())
             ####Subject
             mo =  re.search(r"Subject:.*\n",text_string)        
             data_list.append(text_cleaner(mo.group()))
+            #print("Current Subject %s" % mo.group())
             ####Date
             mo =  re.search(r"Date:.*\n",text_string)        
             data_list.append(text_cleaner(mo.group()))
+            #print("Current Date %s" % mo.group())
             ####Publication
             mo =  re.search(r"Publication:.*\n",text_string)        
             data_list.append(text_cleaner(mo.group()))
+            #print("Current Publication %s" % mo.group())
             ####Condition
             mo =  re.search(r"Condition:.*\n",text_string)        
             data_list.append(text_cleaner(mo.group()))
+            #print("Current Condition %s" % mo.group())
             ####Color
             mo =  re.search(r"Color:.*\n",text_string)        
             data_list.append(text_cleaner(mo.group()))
+            #print("Current Color %s" % mo.group())
             ####Size
             mo =  re.search(r"Size:.*\n.*cm\n",text_string)        
             data_list.append(text_cleaner(mo.group()))
+           # print("Current Size %s" % mo.group())
             
             ####Text
-            
             str_beg = mo.end()
             mo =  re.search(r"Search\n",text_string)
             str_end = mo.start()
             #print(text_string[str_beg:str_end])
             s = text_string[str_beg:str_end]
             data_list.append(text_cleaner(s))
-            
+            #print("Current text %s" % s)
             #add list to pandas dataframe
             #print ("Laenge %i " % len(data_list))
             
@@ -199,23 +209,34 @@ while archive_price_links_counter < number_of_lot_links:
                 data_frame_2 = pd.DataFrame(np.array([data_list]), columns=['Auction', 'Lot', 'Image', 'Title', 'Estimate', 'Sold_For', 'By', 'Subject', 'Date', 'Publication', 'Condition', 'Color', 'Size', 'Text' ])
                 #data_frame.append(data_frame_2, ignore_index=True)
                 data_frame = pd.concat([data_frame, data_frame_2], ignore_index=True)
-    
+            
+            #print("Data Frame ok")
             
             ####################################
             #  Clean Dataframe
             ####################################     
             df_cleaner(data_frame, "Auction", ["Map Auction Sale No. ","\n","closed"], ["","",""])
+            #print("Auction ok")
             df_cleaner(data_frame, "Lot", ["Lot #"], [""])
+            #print("Lot ok")
             df_cleaner(data_frame, "Estimate", ["Estimate:","\n"], ["",""])
+            #print("Estimate ok")
             df_cleaner(data_frame, "Sold_For", ["Sold for:","$","\n"], ["","",""])
+            #print("Sold_For ok")
             df_cleaner(data_frame, "By", ["By:","\n"], ["",""])
+            #print("By ok")
             df_cleaner(data_frame, "Subject", ["Subject:","\n"], ["",""])
+            #print("Subject ok")
             df_cleaner(data_frame, "Date", ["Date:","\n"], ["",""])
+            #print("Date ok")
             df_cleaner(data_frame, "Publication", ["Publication:","\n"], ["",""])
+            #print("Publication ok")
             df_cleaner(data_frame, "Condition", ["Condition:","\r","\n"], ["","",""])
+            #print("Condition ok")
             df_cleaner(data_frame, "Color", ["Color:","\n"], ["",""])
+            #print("Color ok")
             df_cleaner(data_frame, "Size", ["Size:","\n"], [""," "])
-    
+            #print("Size ok")
     
             #data_frame["Text"] = data_frame["Text"].str.replace("\n","")
             ####################################
@@ -223,19 +244,20 @@ while archive_price_links_counter < number_of_lot_links:
             ####################################        
             data_frame["Auction_No"] = data_frame["Auction"].str.split('-').str[0].str.replace(" ", "")
             data_frame["Auction_Close"] = data_frame["Auction"].str.split('-').str[1].str.replace(" ", "")
-            
+            #print("Split Auction ok")
             data_frame["Estimate_Low"] = data_frame["Estimate"].str.split('-').str[0].str.replace(" ", "")
             data_frame["Estimate_High"] = data_frame["Estimate"].str.split('-').str[1].str.replace(" ", "")
-            
+            #print("Split Estimate ok")
             data_frame["Date_Low"] = data_frame["Date"].str.split('-').str[0].str.replace(" ", "")
-            data_frame["Date_High"] = data_frame["Date"].str.split('-').str[1].str.replace(" ", "")
-            
+            #Check if Date_High is NaN
+            data_frame["Date_High"] = data_frame["Date"].str.split('-').str[1]#.str.replace(" ", "")
+            #print("Split Date ok")
             data_frame["Size_Inches"] = data_frame["Size"].str.split('inches').str[0].str.replace(" ", "")
             data_frame["Size_Cm"] = data_frame["Size"].str.split('inches').str[1].str.replace("cm", "").str.replace(" ", "")         
-            
+
             data_frame["Size_Cm_W"] = data_frame["Size_Cm"].str.split('x').str[0]        
             data_frame["Size_Cm_H"] = data_frame["Size_Cm"].str.split('x').str[1] 
-          
+            #print("Split Size CM ok")
             ####################################
             #  Formatting numbers
             ####################################  
@@ -251,10 +273,10 @@ while archive_price_links_counter < number_of_lot_links:
     
     
     #print("Counter at inner loop finish: %i" % archive_lots_links_counter)
-    file_path = "/home/user/Projects/owascrp/Outputs/";    
+    file_path = "C:\\lokal_\\MyApps\\owascrp\\Outputs\\";    
     #file_path = "/home/user/Projects/Owa_Scrape/Outputs/";
     
-    file_path_logs = "/home/user/Projects/owascrp/Outputs/Logs/";    
+    file_path_logs = "C:\\lokal_\\MyApps\\owascrp\\Outputs\\Logs\\";    
     #file_path_logs = "/home/user/Projects/Owa_Scrape/Outputs/Logs/";
     
     data_frame.to_csv(file_path + curr_auction.replace(" ", "")[0:20] +".csv", sep=';', encoding='utf-8')
